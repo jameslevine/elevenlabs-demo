@@ -25,7 +25,11 @@ const clientConfig: DynamoDBClientConfig = {
 };
 
 const ddbClient = new DynamoDBClient(clientConfig);
-const docClient = DynamoDBDocumentClient.from(ddbClient);
+const docClient = DynamoDBDocumentClient.from(ddbClient, {
+  marshallOptions: {
+    removeUndefinedValues: true,
+  },
+});
 
 // ==================== SESSION OPERATIONS ====================
 
