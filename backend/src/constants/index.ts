@@ -10,7 +10,7 @@ export const ENV = {
     process.env.S3_KNOWLEDGE_BUCKET || 'airline-knowledge-base',
   ELEVENLABS_API_KEY: process.env.ELEVENLABS_API_KEY || '',
   ELEVENLABS_AGENT_ID:
-    process.env.ELEVENLABS_AGENT_ID || 'agent_9001khtqgwq1f13rssz3f81pz0p3',
+    process.env.ELEVENLABS_AGENT_ID || 'agent_2101khtqspj7ejv8mdzfmmt55yrx',
   ELEVENLABS_VOICE_ID:
     process.env.ELEVENLABS_VOICE_ID || 'cgSgspJ2msm6clMCkdW9',
   AWS_REGION: process.env.AWS_REGION || 'us-east-1',
