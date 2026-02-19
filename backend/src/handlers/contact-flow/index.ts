@@ -25,8 +25,12 @@ export const handler = async (
   console.log('Contact Flow Event:', JSON.stringify(event, null, 2));
   console.log('Context:', JSON.stringify(context, null, 2));
 
-  const { Name: functionName, Details } = event;
+  const { Details } = event;
   const { ContactData, Parameters } = Details;
+
+  // Amazon Connect passes the function name in Parameters.Name, not event.Name
+  const functionName = Parameters?.Name || event.Name || 'InitializeSession';
+  console.log('Function name:', functionName);
 
   try {
     switch (functionName) {

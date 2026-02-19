@@ -133,8 +133,9 @@ Resources:
               "12345678-1234-1234-1234-123456789012": {"position": {"x": 150, "y": 20}},
               "12345678-1234-1234-1234-123456789013": {"position": {"x": 400, "y": 20}},
               "12345678-1234-1234-1234-123456789014": {"position": {"x": 650, "y": 20}},
+              "12345678-1234-1234-1234-123456789017": {"position": {"x": 800, "y": 20}},
               "12345678-1234-1234-1234-123456789015": {"position": {"x": 650, "y": 200}},
-              "12345678-1234-1234-1234-123456789016": {"position": {"x": 900, "y": 20}}
+              "12345678-1234-1234-1234-123456789016": {"position": {"x": 950, "y": 100}}
             }
           },
           "Actions": [
@@ -175,6 +176,22 @@ Resources:
               "Type": "MessageParticipant",
               "Parameters": {
                 "Text": "$.External.greeting"
+              },
+              "Transitions": {
+                "NextAction": "12345678-1234-1234-1234-123456789017",
+                "Errors": [
+                  {
+                    "NextAction": "12345678-1234-1234-1234-123456789015",
+                    "ErrorType": "NoMatchingError"
+                  }
+                ]
+              }
+            },
+            {
+              "Identifier": "12345678-1234-1234-1234-123456789017",
+              "Type": "MessageParticipant",
+              "Parameters": {
+                "Text": "I can help you with flight changes, refunds, baggage policies, and more. Our voice assistant is currently being upgraded. Please visit skyway.com or call back later for full assistance. Thank you for calling SkyWay Airlines."
               },
               "Transitions": {
                 "NextAction": "12345678-1234-1234-1234-123456789016",
