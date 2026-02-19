@@ -113,6 +113,109 @@ Resources:
         - Key: Application
           Value: airline-contact-center
 
+  # ==================== CONTACT FLOW ====================
+  AirlineContactFlow:
+    Type: AWS::Connect::ContactFlow
+    DependsOn: CustomerServiceQueue
+    Properties:
+      InstanceArn: !GetAtt ConnectInstance.Arn
+      Name: !Sub '${Environment}-airline-voice-agent'
+      Description: Main contact flow for airline customer service with ElevenLabs Voice AI
+      Type: CONTACT_FLOW
+      State: ACTIVE
+      Content: !Sub |
+        {
+          "Version": "2019-10-30",
+          "StartAction": "12345678-1234-1234-1234-123456789012",
+          "Metadata": {
+            "entryPointPosition": {"x": 20, "y": 20},
+            "ActionMetadata": {
+              "12345678-1234-1234-1234-123456789012": {"position": {"x": 150, "y": 20}},
+              "12345678-1234-1234-1234-123456789013": {"position": {"x": 400, "y": 20}},
+              "12345678-1234-1234-1234-123456789014": {"position": {"x": 650, "y": 20}},
+              "12345678-1234-1234-1234-123456789015": {"position": {"x": 650, "y": 200}},
+              "12345678-1234-1234-1234-123456789016": {"position": {"x": 900, "y": 20}}
+            }
+          },
+          "Actions": [
+            {
+              "Identifier": "12345678-1234-1234-1234-123456789012",
+              "Type": "UpdateContactRecordingBehavior",
+              "Parameters": {
+                "RecordingBehavior": {
+                  "RecordedParticipants": ["Agent", "Customer"]
+                }
+              },
+              "Transitions": {
+                "NextAction": "12345678-1234-1234-1234-123456789013"
+              }
+            },
+            {
+              "Identifier": "12345678-1234-1234-1234-123456789013",
+              "Type": "InvokeLambdaFunction",
+              "Parameters": {
+                "LambdaFunctionARN": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Environment}-airline-contact-flow",
+                "InvocationTimeLimitSeconds": "8",
+                "LambdaInvocationAttributes": {
+                  "Name": "InitializeSession"
+                }
+              },
+              "Transitions": {
+                "NextAction": "12345678-1234-1234-1234-123456789014",
+                "Errors": [
+                  {
+                    "NextAction": "12345678-1234-1234-1234-123456789015",
+                    "ErrorType": "NoMatchingError"
+                  }
+                ]
+              }
+            },
+            {
+              "Identifier": "12345678-1234-1234-1234-123456789014",
+              "Type": "MessageParticipant",
+              "Parameters": {
+                "Text": "$.External.greeting"
+              },
+              "Transitions": {
+                "NextAction": "12345678-1234-1234-1234-123456789016",
+                "Errors": [
+                  {
+                    "NextAction": "12345678-1234-1234-1234-123456789016",
+                    "ErrorType": "NoMatchingError"
+                  }
+                ]
+              }
+            },
+            {
+              "Identifier": "12345678-1234-1234-1234-123456789015",
+              "Type": "MessageParticipant",
+              "Parameters": {
+                "Text": "We apologize, but we are experiencing technical difficulties. Please try again later or visit our website at skyway.com for assistance."
+              },
+              "Transitions": {
+                "NextAction": "12345678-1234-1234-1234-123456789016",
+                "Errors": [
+                  {
+                    "NextAction": "12345678-1234-1234-1234-123456789016",
+                    "ErrorType": "NoMatchingError"
+                  }
+                ]
+              }
+            },
+            {
+              "Identifier": "12345678-1234-1234-1234-123456789016",
+              "Type": "DisconnectParticipant",
+              "Parameters": {},
+              "Transitions": {}
+            }
+          ]
+        }
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Application
+          Value: airline-contact-center
+
 Outputs:
   ConnectInstanceId:
     Description: Amazon Connect Instance ID
@@ -129,3 +232,7 @@ Outputs:
   CustomerServiceQueueArn:
     Description: Customer Service Queue ARN
     Value: !GetAtt CustomerServiceQueue.QueueArn
+
+  ContactFlowArn:
+    Description: Airline Contact Flow ARN
+    Value: !GetAtt AirlineContactFlow.ContactFlowArn
