@@ -89,6 +89,7 @@ Resources:
       TemplateURL: ./connect.yaml
       Parameters:
         Environment: !Ref Environment
+        LexBotAliasArn: !GetAtt LexStack.Outputs.LexBotAliasArn
 
 Outputs:
   SessionsTableName:

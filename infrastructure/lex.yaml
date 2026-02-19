@@ -235,3 +235,7 @@ Outputs:
   LexBotArn:
     Description: Lex Bot ARN
     Value: !GetAtt AirlineLexBot.Arn
+
+  LexBotAliasArn:
+    Description: Lex Bot Alias ARN for Connect integration
+    Value: !GetAtt AirlineLexBotAlias.Arn

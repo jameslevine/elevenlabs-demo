@@ -11,6 +11,11 @@ Parameters:
     Description: Amazon Connect instance alias
     Default: airline-contact-center
 
+  LexBotAliasArn:
+    Type: String
+    Description: ARN of the Lex V2 bot alias for voice interaction
+    Default: ''
+
 Resources:
   # ==================== AMAZON CONNECT INSTANCE ====================
   ConnectInstance:
@@ -114,33 +119,36 @@ Resources:
           Value: airline-contact-center
 
   # ==================== CONTACT FLOW ====================
+  # Note: Contact flow with Lex V2 bot integration
+  # The ConnectParticipantWithLexBot action enables voice interaction
   AirlineContactFlow:
     Type: AWS::Connect::ContactFlow
     DependsOn: CustomerServiceQueue
     Properties:
       InstanceArn: !GetAtt ConnectInstance.Arn
       Name: !Sub '${Environment}-airline-voice-agent'
-      Description: Main contact flow for airline customer service with ElevenLabs Voice AI
+      Description: Main contact flow for airline customer service with Lex V2 voice interaction
       Type: CONTACT_FLOW
       State: ACTIVE
       Content: !Sub |
         {
           "Version": "2019-10-30",
-          "StartAction": "12345678-1234-1234-1234-123456789012",
+          "StartAction": "start-recording",
           "Metadata": {
             "entryPointPosition": {"x": 20, "y": 20},
             "ActionMetadata": {
-              "12345678-1234-1234-1234-123456789012": {"position": {"x": 150, "y": 20}},
-              "12345678-1234-1234-1234-123456789013": {"position": {"x": 400, "y": 20}},
-              "12345678-1234-1234-1234-123456789014": {"position": {"x": 650, "y": 20}},
-              "12345678-1234-1234-1234-123456789017": {"position": {"x": 800, "y": 20}},
-              "12345678-1234-1234-1234-123456789015": {"position": {"x": 650, "y": 200}},
-              "12345678-1234-1234-1234-123456789016": {"position": {"x": 950, "y": 100}}
+              "start-recording": {"position": {"x": 150, "y": 20}},
+              "init-lambda": {"position": {"x": 300, "y": 20}},
+              "welcome-message": {"position": {"x": 450, "y": 20}},
+              "lex-bot-input": {"position": {"x": 600, "y": 20}},
+              "continue-prompt": {"position": {"x": 750, "y": 20}},
+              "error-message": {"position": {"x": 600, "y": 200}},
+              "disconnect": {"position": {"x": 900, "y": 100}}
             }
           },
           "Actions": [
             {
-              "Identifier": "12345678-1234-1234-1234-123456789012",
+              "Identifier": "start-recording",
               "Type": "UpdateContactRecordingBehavior",
               "Parameters": {
                 "RecordingBehavior": {
@@ -148,11 +156,11 @@ Resources:
                 }
               },
               "Transitions": {
-                "NextAction": "12345678-1234-1234-1234-123456789013"
+                "NextAction": "init-lambda"
               }
             },
             {
-              "Identifier": "12345678-1234-1234-1234-123456789013",
+              "Identifier": "init-lambda",
               "Type": "InvokeLambdaFunction",
               "Parameters": {
                 "LambdaFunctionARN": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${Environment}-airline-contact-flow",
@@ -162,65 +170,92 @@ Resources:
                 }
               },
               "Transitions": {
-                "NextAction": "12345678-1234-1234-1234-123456789014",
+                "NextAction": "welcome-message",
                 "Errors": [
                   {
-                    "NextAction": "12345678-1234-1234-1234-123456789015",
+                    "NextAction": "welcome-message",
                     "ErrorType": "NoMatchingError"
                   }
                 ]
               }
             },
             {
-              "Identifier": "12345678-1234-1234-1234-123456789014",
+              "Identifier": "welcome-message",
               "Type": "MessageParticipant",
               "Parameters": {
-                "Text": "$.External.greeting"
+                "Text": "Welcome to SkyWay Airlines. I am your virtual assistant. How can I help you today? You can ask about flight changes, refunds, baggage, or delay compensation."
               },
               "Transitions": {
-                "NextAction": "12345678-1234-1234-1234-123456789017",
+                "NextAction": "lex-bot-input",
                 "Errors": [
                   {
-                    "NextAction": "12345678-1234-1234-1234-123456789015",
+                    "NextAction": "error-message",
                     "ErrorType": "NoMatchingError"
                   }
                 ]
               }
             },
             {
-              "Identifier": "12345678-1234-1234-1234-123456789017",
+              "Identifier": "lex-bot-input",
+              "Type": "ConnectParticipantWithLexBot",
+              "Parameters": {
+                "Text": "How can I help you?",
+                "LexV2Bot": {
+                  "AliasArn": "${LexBotAliasArn}"
+                }
+              },
+              "Transitions": {
+                "NextAction": "continue-prompt",
+                "Errors": [
+                  {
+                    "NextAction": "error-message",
+                    "ErrorType": "NoMatchingError"
+                  },
+                  {
+                    "NextAction": "error-message",
+                    "ErrorType": "NoMatchingCondition"
+                  },
+                  {
+                    "NextAction": "error-message",
+                    "ErrorType": "InputTimeLimitExceeded"
+                  }
+                ]
+              }
+            },
+            {
+              "Identifier": "continue-prompt",
               "Type": "MessageParticipant",
               "Parameters": {
-                "Text": "I can help you with flight changes, refunds, baggage policies, and more. Our voice assistant is currently being upgraded. Please visit skyway.com or call back later for full assistance. Thank you for calling SkyWay Airlines."
+                "Text": "Is there anything else I can help you with?"
               },
               "Transitions": {
-                "NextAction": "12345678-1234-1234-1234-123456789016",
+                "NextAction": "lex-bot-input",
                 "Errors": [
                   {
-                    "NextAction": "12345678-1234-1234-1234-123456789016",
+                    "NextAction": "disconnect",
                     "ErrorType": "NoMatchingError"
                   }
                 ]
               }
             },
             {
-              "Identifier": "12345678-1234-1234-1234-123456789015",
+              "Identifier": "error-message",
               "Type": "MessageParticipant",
               "Parameters": {
-                "Text": "We apologize, but we are experiencing technical difficulties. Please try again later or visit our website at skyway.com for assistance."
+                "Text": "I am sorry, I did not understand that. Please try again or say goodbye to end the call."
               },
               "Transitions": {
-                "NextAction": "12345678-1234-1234-1234-123456789016",
+                "NextAction": "lex-bot-input",
                 "Errors": [
                   {
-                    "NextAction": "12345678-1234-1234-1234-123456789016",
+                    "NextAction": "disconnect",
                     "ErrorType": "NoMatchingError"
                   }
                 ]
               }
             },
             {
-              "Identifier": "12345678-1234-1234-1234-123456789016",
+              "Identifier": "disconnect",
               "Type": "DisconnectParticipant",
               "Parameters": {},
               "Transitions": {}
