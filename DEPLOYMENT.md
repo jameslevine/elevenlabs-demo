@@ -124,19 +124,49 @@ aws s3 sync knowledge-base/ s3://$BUCKET_NAME/
    - Claim a toll-free or DID number
    - Associate with the contact flow
 
-3. **Configure Contact Flow with Lex V2 Bot**
-   - Go to Contact Flows
+3. **Configure Contact Flow with Lex V2 Bot (IMPORTANT)**
+
+   The contact flow must be configured manually in the AWS Console to enable voice interaction:
+
+   **Option A: Manual Configuration**
+   - Go to Amazon Connect Console → Contact Flows
    - Edit the "Airline Voice Agent" contact flow
-   - Add the following blocks in order:
-     1. **Set recording behavior** - Enable call recording
-     2. **Invoke AWS Lambda function** - Select `dev-airline-contact-flow`
-     3. **Play prompt** - "Welcome to SkyWay Airlines..."
-     4. **Get customer input** - Configure with Lex V2 bot:
-        - Bot: `dev-airline-voice-agent`
-        - Alias: `devLive`
-        - Bot ID: `NLVRIWKCZR`
-        - Alias ID: `CDYFS1W9KM`
-     5. **Disconnect** - End the call
+   - Delete all existing blocks except Entry point
+   - Add blocks in this order:
+   1. **Set recording and analytics behavior**
+      - Enable call recording for Agent and Customer
+   2. **Invoke AWS Lambda function**
+      - Function: `dev-airline-contact-flow`
+      - Timeout: 8 seconds
+   3. **Play prompt**
+      - Text: "Welcome to SkyWay Airlines. I am your virtual assistant. How can I help you today? You can ask about flight changes, refunds, baggage, or delay compensation."
+   4. **Get customer input** (CRITICAL - This enables voice listening)
+      - Select "Amazon Lex" as input type
+      - Choose "Lex V2"
+      - Bot: `dev-airline-voice-agent`
+      - Alias: `devLive`
+      - Timeout: 15 seconds
+      - Connect the "Default" output to step 5
+      - Connect "Error" outputs to step 6
+   5. **Play prompt** (after successful Lex response)
+      - Text: "Thank you. Is there anything else I can help you with?"
+      - Connect output back to step 4 (Get customer input) for conversation loop
+   6. **Play prompt** (error handling)
+      - Text: "I'm sorry, I didn't understand. Please try again."
+      - Connect output back to step 4 (Get customer input)
+   7. **Disconnect**
+      - Add at the end for call termination
+
+   **Option B: Import Contact Flow**
+   - A sample contact flow JSON is available at: `connect-flows/airline-voice-agent-with-lex.json`
+   - Note: Import may require adjustments due to Amazon Connect's strict format requirements
+
+   **Lex V2 Bot Details:**
+   - Bot Name: `dev-airline-voice-agent`
+   - Bot ID: `NLVRIWKCZR`
+   - Alias: `devLive`
+   - Alias ID: `CDYFS1W9KM`
+   - Alias ARN: `arn:aws:lex:us-east-1:563146874500:bot-alias/NLVRIWKCZR/CDYFS1W9KM`
 
 4. **Configure Lambda Integration**
    - In the contact flow, add "Invoke AWS Lambda function" block
