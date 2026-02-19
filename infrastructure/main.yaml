@@ -68,11 +68,23 @@ Resources:
         ElevenLabsSecretArn: !GetAtt SecretsStack.Outputs.ElevenLabsSecretArn
         ElevenLabsAgentId: !Ref ElevenLabsAgentId
 
+  # ==================== AMAZON LEX ====================
+  LexStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+      - LambdaStack
+    Properties:
+      TemplateURL: ./lex.yaml
+      Parameters:
+        Environment: !Ref Environment
+        FulfillmentLambdaArn: !GetAtt LambdaStack.Outputs.LexFulfillmentLambdaArn
+
   # ==================== AMAZON CONNECT ====================
   ConnectStack:
     Type: AWS::CloudFormation::Stack
     DependsOn:
       - LambdaStack
+      - LexStack
     Properties:
       TemplateURL: ./connect.yaml
       Parameters:

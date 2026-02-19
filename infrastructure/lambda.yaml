@@ -34,7 +34,7 @@ Parameters:
 
 Globals:
   Function:
-    Runtime: nodejs18.x
+    Runtime: nodejs20.x
     Timeout: 30
     MemorySize: 256
     Environment:
@@ -152,6 +152,26 @@ Resources:
         Environment: !Ref Environment
         Application: airline-contact-center
 
+  # ==================== LEX FULFILLMENT LAMBDA ====================
+  LexFulfillmentFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub '${Environment}-airline-lex-fulfillment'
+      Description: Handles Lex V2 fulfillment for airline customer service
+      Handler: handlers/lex-fulfillment/index.handler
+      CodeUri: ../backend/dist/
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 30
+      MemorySize: 256
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+          ELEVENLABS_SECRET_ARN: !Ref ElevenLabsSecretArn
+          ELEVENLABS_AGENT_ID: !Ref ElevenLabsAgentId
+      Tags:
+        Environment: !Ref Environment
+        Application: airline-contact-center
+
   # ==================== LAMBDA PERMISSIONS FOR CONNECT ====================
   ContactFlowConnectPermission:
     Type: AWS::Lambda::Permission
@@ -167,6 +187,15 @@ Resources:
       FunctionName: !Ref AudioProcessorFunction
       Action: lambda:InvokeFunction
       Principal: connect.amazonaws.com
+      SourceAccount: !Ref AWS::AccountId
+
+  # ==================== LAMBDA PERMISSION FOR LEX ====================
+  LexFulfillmentLexPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref LexFulfillmentFunction
+      Action: lambda:InvokeFunction
+      Principal: lexv2.amazonaws.com
       SourceAccount: !Ref AWS::AccountId
 
 Outputs:
@@ -185,6 +214,14 @@ Outputs:
   AudioProcessorLambdaName:
     Description: Audio Processor Lambda Function Name
     Value: !Ref AudioProcessorFunction
+
+  LexFulfillmentLambdaArn:
+    Description: Lex Fulfillment Lambda Function ARN
+    Value: !GetAtt LexFulfillmentFunction.Arn
+
+  LexFulfillmentLambdaName:
+    Description: Lex Fulfillment Lambda Function Name
+    Value: !Ref LexFulfillmentFunction
 
   LambdaExecutionRoleArn:
     Description: Lambda Execution Role ARN
