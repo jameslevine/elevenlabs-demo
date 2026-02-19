@@ -1,0 +1,129 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: DynamoDB tables for Airline Contact Center
+
+Parameters:
+  Environment:
+    Type: String
+    Description: Environment name
+
+Resources:
+  # ==================== SESSIONS TABLE ====================
+  SessionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${Environment}-airline-sessions'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+        - AttributeName: contactId
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: contactId-index
+          KeySchema:
+            - AttributeName: contactId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Application
+          Value: airline-contact-center
+
+  # ==================== CONVERSATIONS TABLE ====================
+  ConversationsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${Environment}-airline-conversations'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Application
+          Value: airline-contact-center
+
+  # ==================== CUSTOMERS TABLE ====================
+  CustomersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub '${Environment}-airline-customers'
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+        - AttributeName: phoneNumber
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: phoneNumber-index
+          KeySchema:
+            - AttributeName: phoneNumber
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Application
+          Value: airline-contact-center
+
+Outputs:
+  SessionsTableName:
+    Description: Sessions Table Name
+    Value: !Ref SessionsTable
+
+  SessionsTableArn:
+    Description: Sessions Table ARN
+    Value: !GetAtt SessionsTable.Arn
+
+  ConversationsTableName:
+    Description: Conversations Table Name
+    Value: !Ref ConversationsTable
+
+  ConversationsTableArn:
+    Description: Conversations Table ARN
+    Value: !GetAtt ConversationsTable.Arn
+
+  CustomersTableName:
+    Description: Customers Table Name
+    Value: !Ref CustomersTable
+
+  CustomersTableArn:
+    Description: Customers Table ARN
+    Value: !GetAtt CustomersTable.Arn

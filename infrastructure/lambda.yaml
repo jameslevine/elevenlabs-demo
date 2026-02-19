@@ -1,0 +1,186 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Lambda functions for Airline Contact Center
+
+Parameters:
+  Environment:
+    Type: String
+    Description: Environment name
+
+  SessionsTableName:
+    Type: String
+    Description: DynamoDB Sessions Table Name
+
+  ConversationsTableName:
+    Type: String
+    Description: DynamoDB Conversations Table Name
+
+  CustomersTableName:
+    Type: String
+    Description: DynamoDB Customers Table Name
+
+  KnowledgeBucketName:
+    Type: String
+    Description: S3 Knowledge Base Bucket Name
+
+  ElevenLabsSecretArn:
+    Type: String
+    Description: ElevenLabs Secret ARN
+
+  ElevenLabsAgentId:
+    Type: String
+    Default: ''
+    Description: ElevenLabs Agent ID
+
+Globals:
+  Function:
+    Runtime: nodejs18.x
+    Timeout: 30
+    MemorySize: 256
+    Environment:
+      Variables:
+        ENVIRONMENT: !Ref Environment
+        DYNAMODB_SESSIONS_TABLE: !Ref SessionsTableName
+        DYNAMODB_CONVERSATIONS_TABLE: !Ref ConversationsTableName
+        DYNAMODB_CUSTOMERS_TABLE: !Ref CustomersTableName
+        S3_KNOWLEDGE_BUCKET: !Ref KnowledgeBucketName
+        ELEVENLABS_AGENT_ID: !Ref ElevenLabsAgentId
+
+Resources:
+  # ==================== LAMBDA EXECUTION ROLE ====================
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${Environment}-airline-lambda-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:DeleteItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                Resource:
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${SessionsTableName}'
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${SessionsTableName}/index/*'
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ConversationsTableName}'
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${ConversationsTableName}/index/*'
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${CustomersTableName}'
+                  - !Sub 'arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/${CustomersTableName}/index/*'
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:ListBucket
+                Resource:
+                  - !Sub 'arn:aws:s3:::${KnowledgeBucketName}'
+                  - !Sub 'arn:aws:s3:::${KnowledgeBucketName}/*'
+        - PolicyName: SecretsManagerAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource:
+                  - !Ref ElevenLabsSecretArn
+        - PolicyName: KinesisVideoAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - kinesisvideo:GetDataEndpoint
+                  - kinesisvideo:GetMedia
+                  - kinesisvideo:PutMedia
+                Resource: '*'
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Application
+          Value: airline-contact-center
+
+  # ==================== CONTACT FLOW LAMBDA ====================
+  ContactFlowFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub '${Environment}-airline-contact-flow'
+      Description: Handles Amazon Connect contact flow events
+      Handler: handlers/contact-flow/index.handler
+      CodeUri: ../backend/dist/
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 10
+      MemorySize: 256
+      Tags:
+        Environment: !Ref Environment
+        Application: airline-contact-center
+
+  # ==================== AUDIO PROCESSOR LAMBDA ====================
+  AudioProcessorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub '${Environment}-airline-audio-processor'
+      Description: Processes audio streams and integrates with ElevenLabs
+      Handler: handlers/audio-processor/index.handler
+      CodeUri: ../backend/dist/
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Timeout: 300
+      MemorySize: 512
+      Tags:
+        Environment: !Ref Environment
+        Application: airline-contact-center
+
+  # ==================== LAMBDA PERMISSIONS FOR CONNECT ====================
+  ContactFlowConnectPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ContactFlowFunction
+      Action: lambda:InvokeFunction
+      Principal: connect.amazonaws.com
+      SourceAccount: !Ref AWS::AccountId
+
+  AudioProcessorConnectPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref AudioProcessorFunction
+      Action: lambda:InvokeFunction
+      Principal: connect.amazonaws.com
+      SourceAccount: !Ref AWS::AccountId
+
+Outputs:
+  ContactFlowLambdaArn:
+    Description: Contact Flow Lambda Function ARN
+    Value: !GetAtt ContactFlowFunction.Arn
+
+  ContactFlowLambdaName:
+    Description: Contact Flow Lambda Function Name
+    Value: !Ref ContactFlowFunction
+
+  AudioProcessorLambdaArn:
+    Description: Audio Processor Lambda Function ARN
+    Value: !GetAtt AudioProcessorFunction.Arn
+
+  AudioProcessorLambdaName:
+    Description: Audio Processor Lambda Function Name
+    Value: !Ref AudioProcessorFunction
+
+  LambdaExecutionRoleArn:
+    Description: Lambda Execution Role ARN
+    Value: !GetAtt LambdaExecutionRole.Arn
