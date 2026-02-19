@@ -138,11 +138,16 @@ Resources:
     Properties:
       FunctionName: !Sub '${Environment}-airline-audio-processor'
       Description: Processes audio streams and integrates with ElevenLabs
-      Handler: handlers/audio-processor/index.handler
+      Handler: handlers/voice-streaming/index.handler
       CodeUri: ../backend/dist/
       Role: !GetAtt LambdaExecutionRole.Arn
-      Timeout: 300
+      Timeout: 900
       MemorySize: 512
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+          ELEVENLABS_AGENT_ID: !Ref ElevenLabsAgentId
+          SECRETS_ARN: !Ref ElevenLabsSecretArn
       Tags:
         Environment: !Ref Environment
         Application: airline-contact-center

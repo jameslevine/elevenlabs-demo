@@ -1,0 +1,125 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Kinesis Video Streams and Streaming Lambda for ElevenLabs integration
+
+Parameters:
+  Environment:
+    Type: String
+    Description: Environment name
+
+  ElevenLabsAgentId:
+    Type: String
+    Description: ElevenLabs Conversational AI Agent ID
+
+  SecretsArn:
+    Type: String
+    Description: ARN of the Secrets Manager secret containing ElevenLabs API key
+
+  ConnectInstanceArn:
+    Type: String
+    Description: Amazon Connect Instance ARN
+
+Resources:
+  # ==================== IAM ROLE FOR STREAMING LAMBDA ====================
+  StreamingLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${Environment}-airline-streaming-lambda-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: KinesisVideoStreamsAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - kinesisvideo:GetDataEndpoint
+                  - kinesisvideo:GetMedia
+                  - kinesisvideo:GetMediaForFragmentList
+                  - kinesisvideo:ListFragments
+                  - kinesisvideo:DescribeStream
+                Resource: '*'
+        - PolicyName: SecretsManagerAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: !Ref SecretsArn
+        - PolicyName: ConnectAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - connect:GetContactAttributes
+                  - connect:UpdateContactAttributes
+                Resource: '*'
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Application
+          Value: airline-contact-center
+
+  # ==================== STREAMING LAMBDA FUNCTION ====================
+  StreamingLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub '${Environment}-airline-voice-streaming'
+      Description: Streams audio between Amazon Connect KVS and ElevenLabs
+      Runtime: nodejs18.x
+      Handler: handlers/voice-streaming/index.handler
+      Role: !GetAtt StreamingLambdaRole.Arn
+      Timeout: 900 # 15 minutes max for long calls
+      MemorySize: 512
+      Environment:
+        Variables:
+          ENVIRONMENT: !Ref Environment
+          ELEVENLABS_AGENT_ID: !Ref ElevenLabsAgentId
+          SECRETS_ARN: !Ref SecretsArn
+      Code:
+        S3Bucket: !Sub 'aws-sam-cli-managed-default-samclisourcebucket-1caje6tnskfe3'
+        S3Key: placeholder # Will be updated by SAM
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Application
+          Value: airline-contact-center
+
+  # ==================== LAMBDA PERMISSION FOR CONNECT ====================
+  StreamingLambdaConnectPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref StreamingLambdaFunction
+      Action: lambda:InvokeFunction
+      Principal: connect.amazonaws.com
+      SourceArn: !Ref ConnectInstanceArn
+
+  # ==================== CLOUDWATCH LOG GROUP ====================
+  StreamingLambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/${Environment}-airline-voice-streaming'
+      RetentionInDays: 30
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Application
+          Value: airline-contact-center
+
+Outputs:
+  StreamingLambdaArn:
+    Description: Voice Streaming Lambda Function ARN
+    Value: !GetAtt StreamingLambdaFunction.Arn
+
+  StreamingLambdaName:
+    Description: Voice Streaming Lambda Function Name
+    Value: !Ref StreamingLambdaFunction
