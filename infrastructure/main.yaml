@@ -68,6 +68,16 @@ Resources:
         ElevenLabsSecretArn: !GetAtt SecretsStack.Outputs.ElevenLabsSecretArn
         ElevenLabsAgentId: !Ref ElevenLabsAgentId
 
+  # ==================== AMAZON CONNECT ====================
+  ConnectStack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn:
+      - LambdaStack
+    Properties:
+      TemplateURL: ./connect.yaml
+      Parameters:
+        Environment: !Ref Environment
+
 Outputs:
   SessionsTableName:
     Description: DynamoDB Sessions Table Name
