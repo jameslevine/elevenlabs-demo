@@ -124,15 +124,32 @@ aws s3 sync knowledge-base/ s3://$BUCKET_NAME/
    - Claim a toll-free or DID number
    - Associate with the contact flow
 
-3. **Import Contact Flow**
+3. **Configure Contact Flow with Lex V2 Bot**
    - Go to Contact Flows
-   - Create a new flow or import from `connect-flows/`
-   - Configure Lambda integration
+   - Edit the "Airline Voice Agent" contact flow
+   - Add the following blocks in order:
+     1. **Set recording behavior** - Enable call recording
+     2. **Invoke AWS Lambda function** - Select `dev-airline-contact-flow`
+     3. **Play prompt** - "Welcome to SkyWay Airlines..."
+     4. **Get customer input** - Configure with Lex V2 bot:
+        - Bot: `dev-airline-voice-agent`
+        - Alias: `devLive`
+        - Bot ID: `NLVRIWKCZR`
+        - Alias ID: `CDYFS1W9KM`
+     5. **Disconnect** - End the call
 
 4. **Configure Lambda Integration**
    - In the contact flow, add "Invoke AWS Lambda function" block
    - Select the `ContactFlowFunction` Lambda
    - Pass required attributes
+
+5. **Lex V2 Bot Intents**
+   The bot is configured with the following intents:
+   - **FlightChangeIntent** - Customer wants to change their flight
+   - **RefundIntent** - Customer wants a refund
+   - **BaggageIntent** - Customer has baggage questions
+   - **DelayCompensationIntent** - Customer wants compensation for delay
+   - **FallbackIntent** - Default fallback for unrecognized requests
 
 ### Step 5: Test the Deployment
 

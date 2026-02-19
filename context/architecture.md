@@ -129,6 +129,19 @@ This document describes the architecture of the Airline Contact Center system, w
 - Manages IVR logic and routing
 - Initiates live media streaming
 - Invokes Lambda functions for business logic
+- Integrates with Amazon Lex V2 for natural language understanding
+
+#### Amazon Lex V2 Bot
+
+- Bot Name: `dev-airline-voice-agent`
+- Bot ID: `NLVRIWKCZR`
+- Alias: `devLive` (ID: `CDYFS1W9KM`)
+- Intents:
+  - **FlightChangeIntent**: Handle flight change requests
+  - **RefundIntent**: Process refund requests
+  - **BaggageIntent**: Answer baggage questions
+  - **DelayCompensationIntent**: Handle delay compensation claims
+  - **FallbackIntent**: Handle unrecognized requests
 
 #### Live Media Streaming
 
