@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SkyWay Airlines - Virtual Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family:
+          'Inter',
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+        background: linear-gradient(
+          135deg,
+          #0f172a 0%,
+          #1e293b 50%,
+          #0f172a 100%
+        );
+        min-height: 100vh;
+        color: #f8fafc;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+
+      /* Header */
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        margin-bottom: 3rem;
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .logo-icon {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+      }
+
+      .logo-text {
+        font-size: 1.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 2rem;
+      }
+
+      .nav-links a {
+        color: #94a3b8;
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.2s;
+      }
+
+      .nav-links a:hover {
+        color: #f8fafc;
+      }
+
+      /* Hero Section */
+      .hero {
+        text-align: center;
+        padding: 4rem 0;
+      }
+
+      .hero h1 {
+        font-size: 3.5rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        background: linear-gradient(135deg, #f8fafc 0%, #94a3b8 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .hero p {
+        font-size: 1.25rem;
+        color: #94a3b8;
+        max-width: 600px;
+        margin: 0 auto 3rem;
+        line-height: 1.8;
+      }
+
+      /* Agent Card */
+      .agent-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 24px;
+        padding: 3rem;
+        max-width: 800px;
+        margin: 0 auto;
+        backdrop-filter: blur(10px);
+      }
+
+      .agent-header {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+      }
+
+      .agent-avatar {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+      }
+
+      .agent-info h2 {
+        font-size: 1.75rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+      }
+
+      .agent-info p {
+        color: #94a3b8;
+        font-size: 1rem;
+      }
+
+      .agent-status {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #22c55e;
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        background: #22c55e;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+
+      /* Conversation Widget Container */
+      .widget-container {
+        margin-top: 2rem;
+        min-height: 400px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 16px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+      }
+
+      .start-button {
+        background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+        color: white;
+        border: none;
+        padding: 1rem 3rem;
+        font-size: 1.125rem;
+        font-weight: 600;
+        border-radius: 50px;
+        cursor: pointer;
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .start-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 40px rgba(59, 130, 246, 0.3);
+      }
+
+      .start-button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .mic-icon {
+        width: 24px;
+        height: 24px;
+      }
+
+      /* Conversation Active State */
+      .conversation-active {
+        text-align: center;
+      }
+
+      .conversation-active .visualizer {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        height: 60px;
+        margin-bottom: 1.5rem;
+      }
+
+      .visualizer-bar {
+        width: 4px;
+        background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+        border-radius: 2px;
+        animation: visualize 0.5s ease-in-out infinite;
+      }
+
+      .visualizer-bar:nth-child(1) {
+        animation-delay: 0s;
+        height: 20px;
+      }
+      .visualizer-bar:nth-child(2) {
+        animation-delay: 0.1s;
+        height: 35px;
+      }
+      .visualizer-bar:nth-child(3) {
+        animation-delay: 0.2s;
+        height: 50px;
+      }
+      .visualizer-bar:nth-child(4) {
+        animation-delay: 0.3s;
+        height: 35px;
+      }
+      .visualizer-bar:nth-child(5) {
+        animation-delay: 0.4s;
+        height: 20px;
+      }
+
+      @keyframes visualize {
+        0%,
+        100% {
+          transform: scaleY(1);
+        }
+        50% {
+          transform: scaleY(1.5);
+        }
+      }
+
+      .conversation-status {
+        font-size: 1.125rem;
+        color: #94a3b8;
+        margin-bottom: 1.5rem;
+      }
+
+      .end-button {
+        background: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        padding: 0.75rem 2rem;
+        font-size: 1rem;
+        font-weight: 500;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      .end-button:hover {
+        background: rgba(239, 68, 68, 0.3);
+      }
+
+      /* Transcript */
+      .transcript {
+        margin-top: 2rem;
+        max-height: 300px;
+        overflow-y: auto;
+        text-align: left;
+      }
+
+      .transcript-message {
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+        border-radius: 12px;
+        font-size: 0.95rem;
+        line-height: 1.6;
+      }
+
+      .transcript-message.agent {
+        background: rgba(59, 130, 246, 0.1);
+        border-left: 3px solid #3b82f6;
+      }
+
+      .transcript-message.user {
+        background: rgba(139, 92, 246, 0.1);
+        border-left: 3px solid #8b5cf6;
+      }
+
+      .transcript-message .speaker {
+        font-weight: 600;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.25rem;
+        color: #94a3b8;
+      }
+
+      /* Features Section */
+      .features {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-top: 4rem;
+      }
+
+      .feature-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 1.5rem;
+        transition:
+          transform 0.2s,
+          border-color 0.2s;
+      }
+
+      .feature-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(59, 130, 246, 0.3);
+      }
+
+      .feature-icon {
+        width: 48px;
+        height: 48px;
+        background: rgba(59, 130, 246, 0.1);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .feature-card h3 {
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+      }
+
+      .feature-card p {
+        color: #94a3b8;
+        font-size: 0.875rem;
+        line-height: 1.6;
+      }
+
+      /* Footer */
+      .footer {
+        text-align: center;
+        padding: 3rem 0;
+        margin-top: 4rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        color: #64748b;
+        font-size: 0.875rem;
+      }
+
+      .footer a {
+        color: #3b82f6;
+        text-decoration: none;
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .hero h1 {
+          font-size: 2.5rem;
+        }
+
+        .agent-header {
+          flex-direction: column;
+          text-align: center;
+        }
+
+        .nav-links {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <header class="header">
+        <div class="logo">
+          <div class="logo-icon">✈️</div>
+          <span class="logo-text">SkyWay Airlines</span>
+        </div>
+        <nav class="nav-links">
+          <a href="#">Flights</a>
+          <a href="#">Bookings</a>
+          <a href="#">Support</a>
+          <a href="#">Contact</a>
+        </nav>
+      </header>
+
+      <!-- Hero Section -->
+      <section class="hero">
+        <h1>Your AI Travel Assistant</h1>
+        <p>
+          Get instant help with flight changes, refunds, baggage inquiries, and
+          delay compensation. Our AI assistant Sarah is available 24/7 to assist
+          you.
+        </p>
+      </section>
+
+      <!-- Agent Card -->
+      <div class="agent-card">
+        <div class="agent-header">
+          <div class="agent-avatar">👩‍💼</div>
+          <div class="agent-info">
+            <h2>Sarah</h2>
+            <p>Virtual Customer Service Agent</p>
+            <div class="agent-status">
+              <span class="status-dot"></span>
+              Available now
+            </div>
+          </div>
+        </div>
+
+        <div class="widget-container" id="widget-container">
+          <!-- ElevenLabs Embedded Widget -->
+          <elevenlabs-convai
+            agent-id="agent_7301khv4dj57e0grp9kxgvghhbgt"
+          ></elevenlabs-convai>
+        </div>
+      </div>
+
+      <!-- Features Section -->
+      <section class="features">
+        <div class="feature-card">
+          <div class="feature-icon">✈️</div>
+          <h3>Flight Changes</h3>
+          <p>
+            Modify your booking, change dates, or upgrade your seat with ease.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">💰</div>
+          <h3>Refunds</h3>
+          <p>
+            Process refund requests and get information about our refund
+            policies.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🧳</div>
+          <h3>Baggage</h3>
+          <p>
+            Check baggage allowances, report lost luggage, or add extra bags.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">⏰</div>
+          <h3>Delay Compensation</h3>
+          <p>
+            Understand your rights and claim compensation for delayed flights.
+          </p>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer class="footer">
+        <p>
+          Powered by
+          <a href="https://elevenlabs.io" target="_blank">ElevenLabs</a>
+          Conversational AI
+        </p>
+        <p style="margin-top: 0.5rem">
+          Agent ID: agent_7301khv4dj57e0grp9kxgvghhbgt
+        </p>
+      </footer>
+    </div>
+
+    <!-- ElevenLabs Conversational AI Widget -->
+    <script
+      src="https://elevenlabs.io/convai-widget/index.js"
+      async
+      type="text/javascript"
+    ></script>
+
+    <script>
+      const AGENT_ID = 'agent_7301khv4dj57e0grp9kxgvghhbgt';
+      let conversation = null;
+
+      async function startConversation() {
+        const startButton = document.getElementById('start-button');
+        const idleState = document.getElementById('idle-state');
+        const activeState = document.getElementById('active-state');
+        const transcript = document.getElementById('transcript');
+        const statusEl = document.getElementById('conversation-status');
+
+        startButton.disabled = true;
+        startButton.innerHTML = '<span>Connecting...</span>';
+
+        try {
+          // Request microphone permission
+          await navigator.mediaDevices.getUserMedia({ audio: true });
+
+          // Initialize the ElevenLabs conversation
+          const { Conversation } =
+            await import('https://elevenlabs.io/convai-widget/index.js');
+
+          conversation = await Conversation.startSession({
+            agentId: AGENT_ID,
+            onConnect: () => {
+              console.log('Connected to agent');
+              idleState.style.display = 'none';
+              activeState.style.display = 'block';
+              transcript.style.display = 'block';
+              statusEl.textContent = 'Connected - Sarah is listening...';
+            },
+            onDisconnect: () => {
+              console.log('Disconnected from agent');
+              resetUI();
+            },
+            onMessage: (message) => {
+              console.log('Message:', message);
+              addToTranscript(message);
+            },
+            onModeChange: (mode) => {
+              console.log('Mode changed:', mode);
+              if (mode.mode === 'speaking') {
+                statusEl.textContent = 'Sarah is speaking...';
+              } else if (mode.mode === 'listening') {
+                statusEl.textContent = 'Sarah is listening...';
+              }
+            },
+            onError: (error) => {
+              console.error('Conversation error:', error);
+              statusEl.textContent = 'Error: ' + error.message;
+            },
+          });
+        } catch (error) {
+          console.error('Failed to start conversation:', error);
+          alert(
+            'Failed to start conversation. Please make sure you have allowed microphone access.',
+          );
+          resetUI();
+        }
+      }
+
+      function endConversation() {
+        if (conversation) {
+          conversation.endSession();
+          conversation = null;
+        }
+        resetUI();
+      }
+
+      function resetUI() {
+        const startButton = document.getElementById('start-button');
+        const idleState = document.getElementById('idle-state');
+        const activeState = document.getElementById('active-state');
+
+        startButton.disabled = false;
+        startButton.innerHTML = `
+        <svg class="mic-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+          <line x1="12" y1="19" x2="12" y2="23"></line>
+          <line x1="8" y1="23" x2="16" y2="23"></line>
+        </svg>
+        Start Conversation
+      `;
+        idleState.style.display = 'block';
+        activeState.style.display = 'none';
+      }
+
+      function addToTranscript(message) {
+        const transcript = document.getElementById('transcript');
+        const messageEl = document.createElement('div');
+        messageEl.className = `transcript-message ${message.source === 'ai' ? 'agent' : 'user'}`;
+        messageEl.innerHTML = `
+        <div class="speaker">${message.source === 'ai' ? 'Sarah' : 'You'}</div>
+        <div>${message.message}</div>
+      `;
+        transcript.appendChild(messageEl);
+        transcript.scrollTop = transcript.scrollHeight;
+      }
+
+      // Alternative: Use the embedded widget
+      function useEmbeddedWidget() {
+        const container = document.getElementById('widget-container');
+        container.innerHTML = `
+        <elevenlabs-convai agent-id="${AGENT_ID}"></elevenlabs-convai>
+      `;
+      }
+    </script>
+  </body>
+</html>
